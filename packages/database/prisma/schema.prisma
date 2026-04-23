@@ -1,0 +1,1348 @@
+// =============================================================================
+// POSTADOR — Prisma Schema Completo
+// PostgreSQL + Prisma ORM
+// =============================================================================
+
+generator client {
+  provider      = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// =============================================================================
+// USUÁRIOS E AUTENTICAÇÃO
+// =============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  role          String  @default("OWNER")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts           Account[]
+  sessions           Session[]
+  socialProfiles     SocialProfile[]
+  contentIdeas       ContentIdea[]
+  contentProjects    ContentProject[]
+  carousels          Carousel[]
+  videoProjects      VideoProject[]
+  publications       Publication[]
+  campaigns          Campaign[]
+  contentPillars     ContentPillar[]
+  templates          Template[]
+  prompts            PromptTemplate[]
+  auditLogs          AuditLog[]
+  notifications      Notification[]
+  referenceProfiles  ReferenceProfile[]
+  opportunitySignals OpportunitySignal[]
+  agentRuns          AgentRun[]
+  approvals          Approval[]
+  kpiTargets         KpiTarget[]
+  budgets            Budget[]
+  agencyMemories     AgentMemory[]
+  automationRules    AutomationRule[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// =============================================================================
+// PERFIS SOCIAIS
+// =============================================================================
+
+model SocialProfile {
+  id                     String         @id @default(cuid())
+  userId                 String
+  platform               String
+  handle                 String
+  displayName            String
+  profileUrl             String?
+  profileImageUrl        String?
+  externalAccountId      String?        // ID na plataforma (ex: Instagram Business Account ID)
+  accessToken            String?        // Criptografado
+  refreshToken           String?        // Criptografado
+  tokenExpiresAt         DateTime?
+  followerCount          Int?
+  followingCount         Int?
+  mediaCount             Int?
+  isActive               Boolean        @default(true)
+  isConnected            Boolean        @default(false)
+  lastSyncAt             DateTime?
+  metadata               String?          // Dados extras da plataforma
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publications Publication[]
+
+  @@unique([userId, platform, handle])
+  @@index([userId])
+  @@index([platform])
+  @@map("social_profiles")
+}
+
+// =============================================================================
+// SINAIS DE TENDÊNCIAS (last30days integration)
+// =============================================================================
+
+model TrendSignal {
+  id              String   @id @default(cuid())
+  topic           String
+  source          String   // reddit, x, youtube, hackernews, etc.
+  rawContent      String? 
+  normalizedText  String? 
+  relevanceScore  Float    @default(0)
+  viralScore      Float    @default(0)
+  freshnessScore  Float    @default(0)
+  engagementScore Float    @default(0)
+  sourceUrl       String?
+  authorHandle    String?
+  publishedAt     DateTime?
+  capturedAt      DateTime @default(now())
+  expiresAt       DateTime?
+  metadata        String?
+  tags            String
+  isProcessed     Boolean  @default(false)
+  clusterId       String?  // Para agrupamento de temas similares
+  createdAt       DateTime @default(now())
+
+  contentIdeas ContentIdea[]
+
+  @@index([topic])
+  @@index([relevanceScore])
+  @@index([capturedAt])
+  @@index([isProcessed])
+  @@map("trend_signals")
+}
+
+// =============================================================================
+// PILARES E CAMPANHAS EDITORIAIS
+// =============================================================================
+
+model ContentPillar {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String? 
+  color       String?  // HEX color
+  icon        String?
+  percentage  Int      @default(20) // % do mix editorial
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id])
+  contentIdeas ContentIdea[]
+
+  @@index([userId])
+  @@map("content_pillars")
+}
+
+model Campaign {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  description String?  
+  objective   String
+  startDate   DateTime
+  endDate     DateTime?
+  isActive    Boolean   @default(true)
+  metadata    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user            User            @relation(fields: [userId], references: [id])
+  contentProjects ContentProject[]
+
+  @@index([userId])
+  @@index([startDate, endDate])
+  @@map("campaigns")
+}
+
+// =============================================================================
+// IDEIAS DE CONTEÚDO
+// =============================================================================
+
+model ContentIdea {
+  id                String           @id @default(cuid())
+  userId            String
+  pillarId          String?
+  trendSignalId     String?
+
+  title             String
+  hook              String?
+  angle             String?         
+  description       String?         
+  targetAudience    String?
+  mainPromise       String?
+  cta               String?
+  format            String?
+  objective         String?
+  status            String    @default("IDEA")
+
+  // Scores editoriais
+  viralPotentialScore  Float @default(0)
+  authorityScore       Float @default(0)
+  clarityScore         Float @default(0)
+  repurposeScore       Float @default(0)
+  editorialFitScore    Float @default(0)
+  effortScore          Float @default(0) // 1=baixo, 5=alto
+  urgencyScore         Float @default(0)
+
+  // Metadados de geração
+  generatedByAi    Boolean   @default(false)
+  aiModel          String?
+  aiPromptId       String?
+  generationCost   Float?
+
+  tags             String
+  notes            String? 
+  frozenAt         DateTime? // Quando foi "congelada" (aprovada manualmente)
+  archivedAt       DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id])
+  pillar         ContentPillar?  @relation(fields: [pillarId], references: [id])
+  trendSignal    TrendSignal?    @relation(fields: [trendSignalId], references: [id])
+  contentProject ContentProject?
+  editorial_briefs EditorialBrief[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([pillarId])
+  @@index([viralPotentialScore])
+  @@map("content_ideas")
+}
+
+// =============================================================================
+// BRIEFING EDITORIAL
+// =============================================================================
+
+model EditorialBrief {
+  id              String   @id @default(cuid())
+  contentIdeaId   String
+  title           String
+  hook            String? 
+  narrativeStructure String?
+  objective       String?
+  targetAudience  String? 
+  mainPromise     String? 
+  cta             String?
+  format          String?
+  requiredAssets  String?    // Lista de assets necessários
+  references      String?    // URLs, exemplos, referências
+  toneOfVoice     String?
+  redundancyRisk  Float    @default(0)
+  versions        String?    // Versões: aggressive, didactic, authority, provocative, minimalist
+  approvedVersion String?
+  approvedAt      DateTime?
+  notes           String? 
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  contentIdea     ContentIdea    @relation(fields: [contentIdeaId], references: [id])
+  contentProject  ContentProject?
+
+  @@index([contentIdeaId])
+  @@map("editorial_briefs")
+}
+
+// =============================================================================
+// PROJETO DE CONTEÚDO (unifica produção)
+// =============================================================================
+
+model ContentProject {
+  id             String        @id @default(cuid())
+  userId         String
+  campaignId     String?
+  contentIdeaId  String?       @unique
+  briefId        String?       @unique
+  title          String
+  format         String
+  status         String @default("IN_PRODUCTION")
+  scheduledFor   DateTime?
+  publishedAt    DateTime?
+  notes          String?      
+  metadata       String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user         User            @relation(fields: [userId], references: [id])
+  campaign     Campaign?       @relation(fields: [campaignId], references: [id])
+  contentIdea  ContentIdea?    @relation(fields: [contentIdeaId], references: [id])
+  brief        EditorialBrief? @relation(fields: [briefId], references: [id])
+  carousel     Carousel?
+  videoProject VideoProject?
+  assets       Asset[]
+  publications Publication[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledFor])
+  @@map("content_projects")
+}
+
+// =============================================================================
+// CARROSSÉIS
+// =============================================================================
+
+model Carousel {
+  id              String   @id @default(cuid())
+  userId          String
+  contentProjectId String?  @unique
+  title           String
+  hook            String?
+  cta             String?
+  slideCount      Int      @default(0)
+  templateId      String?
+  colorTheme      String?
+  fontFamily      String?
+  brandKitId      String?
+  readabilityScore Float   @default(0)
+  retentionScore  Float    @default(0)
+  status          String @default("IN_PRODUCTION")
+  exportUrls      String?    // URLs dos slides exportados
+  metadata        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id])
+  contentProject ContentProject? @relation(fields: [contentProjectId], references: [id])
+  slides         CarouselSlide[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("carousels")
+}
+
+model CarouselSlide {
+  id          String   @id @default(cuid())
+  carouselId  String
+  position    Int
+  headline    String?
+  subtitle    String?
+  bodyText    String? 
+  bullets     String?    // Array de bullets
+  imageUrl    String?
+  imageAltText String?
+  dataPoints  String?    // Dados destacados
+  analogies   String?
+  examples    String?
+  cta         String?
+  notes       String?
+  isCover     Boolean  @default(false)
+  isLastSlide Boolean  @default(false)
+  metadata    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  carousel Carousel @relation(fields: [carouselId], references: [id], onDelete: Cascade)
+
+  @@index([carouselId, position])
+  @@map("carousel_slides")
+}
+
+// =============================================================================
+// PROJETOS DE VÍDEO (integração Remotion + react-video-editor)
+// =============================================================================
+
+model VideoProject {
+  id              String   @id @default(cuid())
+  userId          String
+  contentProjectId String? @unique
+  title           String
+  description     String? 
+  durationSeconds Int?
+  aspectRatio     String   @default("9:16") // 9:16, 16:9, 1:1, 4:5
+  fps             Int      @default(30)
+  compositionId   String?  // ID da composição Remotion
+  templateId      String?
+  scriptText      String?  // Roteiro completo
+  voiceoverText   String? 
+  voiceCloneId    String?  // ID da voz clonada
+  avatarEnabled   Boolean  @default(false)
+  avatarId        String?
+  status          String @default("IN_PRODUCTION")
+  renderStatus    String  @default("QUEUED")
+  outputUrl       String?
+  thumbnailUrl    String?
+  metadata        String?    // Configurações Remotion, inputs
+  editorState     String?    // Estado do react-video-editor
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id])
+  contentProject ContentProject? @relation(fields: [contentProjectId], references: [id])
+  scenes         VideoScene[]
+  renders        Render[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([renderStatus])
+  @@map("video_projects")
+}
+
+model VideoScene {
+  id             String   @id @default(cuid())
+  videoProjectId String
+  position       Int
+  name           String?
+  startFrame     Int      @default(0)
+  endFrame       Int
+  durationFrames Int
+  type           String   @default("scene") // scene, title, transition, broll
+  scriptText     String? 
+  voiceoverText  String? 
+  captionText    String? 
+  assetIds       String // IDs de assets usados
+  composition    String?    // JSON de composição Remotion
+  metadata       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  videoProject VideoProject @relation(fields: [videoProjectId], references: [id], onDelete: Cascade)
+
+  @@index([videoProjectId, position])
+  @@map("video_scenes")
+}
+
+// =============================================================================
+// RENDERS (integração Remotion)
+// =============================================================================
+
+model Render {
+  id             String       @id @default(cuid())
+  videoProjectId String
+  compositionId  String
+  inputProps     String         // Props passados ao Remotion
+  outputFormat   String       @default("mp4") // mp4, webm, gif
+  resolution     String       @default("1080x1920")
+  quality        Int          @default(80)
+  status         String @default("QUEUED")
+  progress       Float        @default(0)
+  outputUrl      String?
+  thumbnailUrl   String?
+  fileSize       Int?
+  durationMs     Int?
+  errorMessage   String?     
+  startedAt      DateTime?
+  completedAt    DateTime?
+  remotionJobId  String?      // ID do job no Remotion Lambda/local
+  retryCount     Int          @default(0)
+  maxRetries     Int          @default(3)
+  metadata       String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  videoProject VideoProject @relation(fields: [videoProjectId], references: [id])
+
+  @@index([videoProjectId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("renders")
+}
+
+// =============================================================================
+// ASSETS E BIBLIOTECA DE MÍDIA
+// =============================================================================
+
+model Asset {
+  id               String   @id @default(cuid())
+  userId           String?
+  contentProjectId String?
+  name             String
+  type             String   // image, video, audio, template, font
+  mimeType         String?
+  url              String
+  thumbnailUrl     String?
+  fileSize         Int?
+  width            Int?
+  height           Int?
+  durationSeconds  Float?
+  altText          String?
+  description      String?
+  tags             String
+  source           String?  // upload, pexels, dall-e, remotion, generated
+  sourceUrl        String?
+  isFavorite       Boolean  @default(false)
+  usageCount       Int      @default(0)
+  metadata         String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  contentProject ContentProject? @relation(fields: [contentProjectId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([tags])
+  @@map("assets")
+}
+
+// =============================================================================
+// PUBLICAÇÕES E AGENDAMENTO (integração SocialFlow)
+// =============================================================================
+
+model Publication {
+  id               String            @id @default(cuid())
+  userId           String
+  socialProfileId  String
+  contentProjectId String?
+  title            String?
+  caption          String?          
+  hashtags         String
+  mediaUrls        String
+  coverUrl         String?
+  format           String
+  status           String @default("PENDING")
+  scheduledFor     DateTime?
+  publishedAt      DateTime?
+  externalPostId   String?           // ID do post na plataforma
+  externalUrl      String?           // URL do post publicado
+  socialflowJobId  String?           // ID do job no SocialFlow
+  checklistPassed  Boolean           @default(false)
+  checklistData    String?
+  metadata         String?
+  errorMessage     String?          
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id])
+  socialProfile  SocialProfile   @relation(fields: [socialProfileId], references: [id])
+  contentProject ContentProject? @relation(fields: [contentProjectId], references: [id])
+  attempts       PublicationAttempt[]
+  analytics      AnalyticsSnapshot[]
+
+  @@index([userId])
+  @@index([socialProfileId])
+  @@index([status])
+  @@index([scheduledFor])
+  @@map("publications")
+}
+
+model PublicationAttempt {
+  id            String            @id @default(cuid())
+  publicationId String
+  attemptNumber Int
+  status        String
+  payload       String?             // Payload enviado para a API
+  response      String?             // Resposta da API
+  errorMessage  String?          
+  errorCode     String?
+  attemptedAt   DateTime          @default(now())
+  durationMs    Int?
+
+  publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@index([publicationId])
+  @@map("publication_attempts")
+}
+
+// =============================================================================
+// COMENTÁRIOS E INTERAÇÃO ASSISTIDA
+// =============================================================================
+
+model Comment {
+  id              String        @id @default(cuid())
+  userId          String
+  publicationId   String?
+  externalId      String?       // ID do comentário na plataforma
+  authorHandle    String?
+  authorName      String?
+  text            String       
+  intent          String @default("OTHER")
+  intentScore     Float         @default(0)
+  isSpam          Boolean       @default(false)
+  isHidden        Boolean       @default(false)
+  isHotLead       Boolean       @default(false)
+  labels          String
+  receivedAt      DateTime
+  processedAt     DateTime?
+  metadata        String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  suggestions  CommentSuggestion[]
+
+  @@index([userId])
+  @@index([publicationId])
+  @@index([intent])
+  @@index([receivedAt])
+  @@map("comments")
+}
+
+model CommentSuggestion {
+  id              String                @id @default(cuid())
+  commentId       String
+  suggestedText   String               
+  confidence      Float                 @default(0)
+  tone            String?               // formal, casual, friendly, technical
+  status          String @default("PENDING_SUGGESTION")
+  approvedAt      DateTime?
+  publishedAt     DateTime?
+  rejectedAt      DateTime?
+  rejectionReason String?
+  isAutoApproved  Boolean               @default(false)
+  aiModel         String?
+  metadata        String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([commentId])
+  @@index([status])
+  @@map("comment_suggestions")
+}
+
+// =============================================================================
+// ANALYTICS E PERFORMANCE
+// =============================================================================
+
+model AnalyticsSnapshot {
+  id            String   @id @default(cuid())
+  publicationId String
+  platform      String
+  snapshotAt    DateTime @default(now())
+  periodHours   Int      @default(24) // Janela da snapshot (24h, 48h, 7d, etc.)
+
+  // Métricas principais
+  impressions    Int      @default(0)
+  reach          Int      @default(0)
+  likes          Int      @default(0)
+  comments       Int      @default(0)
+  shares         Int      @default(0)
+  saves          Int      @default(0)
+  plays          Int?
+  completionRate Float?
+  engagementRate Float?
+  clicksLink     Int      @default(0)
+  profileVisits  Int      @default(0)
+  follows        Int      @default(0)
+
+  // Score proprietário
+  performanceScore Float  @default(0)
+  metadata         String?
+
+  publication Publication @relation(fields: [publicationId], references: [id])
+
+  @@index([publicationId])
+  @@index([snapshotAt])
+  @@map("analytics_snapshots")
+}
+
+model PerformanceMetric {
+  id          String   @id @default(cuid())
+  userId      String
+  entityType  String   // publication, format, topic, hook, cta, pillar
+  entityId    String?
+  entityLabel String?
+  metricName  String
+  metricValue Float
+  period      String   // daily, weekly, monthly
+  periodStart DateTime
+  periodEnd   DateTime
+  metadata    String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, entityType])
+  @@index([periodStart, periodEnd])
+  @@map("performance_metrics")
+}
+
+model Experiment {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String? 
+  type        String   // ab_hook, ab_format, ab_cta, ab_caption
+  status      String   @default("running") // running, paused, concluded
+  variantA    String     // Definição da variante A
+  variantB    String     // Definição da variante B
+  winnerVariant String? // "A" ou "B"
+  startedAt   DateTime @default(now())
+  concludedAt DateTime?
+  metadata    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@map("experiments")
+}
+
+// =============================================================================
+// TEMPLATES E PROMPTS
+// =============================================================================
+
+model Template {
+  id          String        @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  type        String        // carousel, video, caption, hook, brief
+  format      String?
+  content     String          // Estrutura do template
+  thumbnail   String?
+  isPublic    Boolean       @default(false)
+  usageCount  Int           @default(0)
+  tags        String
+  metadata    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, type])
+  @@map("templates")
+}
+
+model PromptTemplate {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String
+  description  String? 
+  category     String   // idea_gen, brief, carousel, video_script, caption, comment, analytics, repurpose
+  version      Int      @default(1)
+  content      String   // Template com variáveis {{var}}
+  variables    String?    // Definição das variáveis esperadas
+  outputSchema String?    // JSON Schema esperado na saída
+  model        String?  // Modelo de IA preferencial
+  maxTokens    Int      @default(4096)
+  temperature  Float    @default(0.7)
+  estimatedCost Float   @default(0) // Custo estimado em USD
+  isActive     Boolean  @default(true)
+  tags         String
+  metadata     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id])
+  promptRuns    PromptRun[]
+
+  @@index([userId, category])
+  @@index([isActive])
+  @@map("prompt_templates")
+}
+
+model PromptRun {
+  id               String   @id @default(cuid())
+  promptTemplateId String
+  userId           String?
+  input            String     // Variáveis usadas
+  rawOutput        String? 
+  parsedOutput     String?
+  model            String
+  provider         String
+  inputTokens      Int      @default(0)
+  outputTokens     Int      @default(0)
+  costUsd          Float    @default(0)
+  latencyMs        Int?
+  success          Boolean  @default(true)
+  errorMessage     String?
+  qualityScore     Float?   // Avaliação da qualidade da saída
+  metadata         String?
+  createdAt        DateTime @default(now())
+
+  promptTemplate PromptTemplate @relation(fields: [promptTemplateId], references: [id])
+
+  @@index([promptTemplateId])
+  @@index([createdAt])
+  @@map("prompt_runs")
+}
+
+// =============================================================================
+// TAGS
+// =============================================================================
+
+model Tag {
+  id        String   @id @default(cuid())
+  userId    String?
+  name      String
+  slug      String
+  color     String?
+  category  String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, slug])
+  @@index([userId])
+  @@map("tags")
+}
+
+// =============================================================================
+// AUDITORIA E LOGS
+// =============================================================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String   // create, update, delete, publish, approve, reject, etc.
+  entityType String   // content_idea, publication, comment, agent_run, etc.
+  entityId   String?
+  before     String?    // Estado anterior
+  after      String?    // Estado posterior
+  metadata   String?    // Contexto adicional
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// =============================================================================
+// JOBS E FILAS
+// =============================================================================
+
+model Job {
+  id          String    @id @default(cuid())
+  queue       String    // ai_generation, render, publish, analytics, research
+  type        String    // generate_carousel, render_video, publish_post, sync_analytics, etc.
+  status      String @default("WAITING")
+  payload     String
+  result      String?
+  error       String?  
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  priority    Int       @default(0)
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  bullJobId   String?   // ID do job no BullMQ
+  metadata    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([queue, status])
+  @@index([type])
+  @@index([scheduledAt])
+  @@map("jobs")
+}
+
+// =============================================================================
+// NOTIFICAÇÕES
+// =============================================================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // alert, recommendation, success, error, info
+  title     String
+  message   String  
+  action    String?    // { label, href }
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// =============================================================================
+// MÓDULO 14 — REFERENCE RADAR (Perfis de Referência)
+// =============================================================================
+
+model ReferenceProfile {
+  id              String   @id @default(cuid())
+  userId          String
+  sourceType      String   // instagram, youtube, twitter_x, linkedin, blog, newsletter, rss
+  handle          String
+  displayName     String
+  profileUrl      String?
+  niche           String?
+  language        String   @default("pt-BR")
+  priority        Int      @default(3) // 1-5
+  relevanceScore  Float    @default(0)
+  alignmentScore  Float    @default(0) // Afinidade com meu perfil
+  notes           String? 
+  monitoringMode  String   @default("manual") // manual, assisted, auto
+  isActive        Boolean  @default(true)
+  tags            String
+  groupId         String?
+  metadata        String?
+  lastAnalyzedAt  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User                     @relation(fields: [userId], references: [id])
+  group           ReferenceProfileGroup?   @relation(fields: [groupId], references: [id])
+  contentEntries  ReferenceContentEntry[]
+  signals         ReferenceSignal[]
+  opportunities   OpportunitySignal[]
+  benchmarks      BenchmarkSnapshot[]
+
+  @@unique([userId, sourceType, handle])
+  @@index([userId])
+  @@index([isActive])
+  @@map("reference_profiles")
+}
+
+model ReferenceProfileGroup {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  type        String   @default("reference") // reference, competitor, inspiration, media, lab
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profiles ReferenceProfile[]
+
+  @@index([userId])
+  @@map("reference_profile_groups")
+}
+
+model ReferenceContentEntry {
+  id                 String   @id @default(cuid())
+  referenceProfileId String
+  externalContentId  String?
+  contentUrl         String?
+  contentType        String?  // reel, carousel, post, video, article
+  observedAt         DateTime
+  capturedAt         DateTime @default(now())
+  rawText            String? 
+  normalizedText     String? 
+  mediaMetadata      String?
+  hookText           String? 
+  ctaText            String?
+  topicSummary       String? 
+  sourceMethod       String   @default("manual") // manual, csv, rss, api, url_paste
+  status             String   @default("raw") // raw, analyzed, processed
+  metadata           String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  referenceProfile ReferenceProfile @relation(fields: [referenceProfileId], references: [id], onDelete: Cascade)
+  signals          ReferenceSignal[]
+  originalityChecks OriginalityCheck[]
+
+  @@index([referenceProfileId])
+  @@index([observedAt])
+  @@map("reference_content_entries")
+}
+
+model ReferenceSignal {
+  id                      String   @id @default(cuid())
+  referenceProfileId      String?
+  referenceContentEntryId String?
+  signalType              String
+  signalValue             String  
+  confidence              Float    @default(0)
+  extractedBy             String   @default("manual") // manual, ai, pattern
+  metadata                String?
+  createdAt               DateTime @default(now())
+
+  referenceProfile      ReferenceProfile?      @relation(fields: [referenceProfileId], references: [id])
+  referenceContentEntry ReferenceContentEntry? @relation(fields: [referenceContentEntryId], references: [id])
+
+  @@index([referenceProfileId])
+  @@index([signalType])
+  @@map("reference_signals")
+}
+
+model BenchmarkSnapshot {
+  id                 String   @id @default(cuid())
+  userId             String
+  referenceProfileId String?
+  snapshotAt         DateTime @default(now())
+  topTopics          String?
+  topFormats         String?
+  hookPatterns       String?
+  ctaPatterns        String?
+  postingFrequency   String?
+  saturationTopics   String?
+  opportunityTopics  String?
+  metadata           String?
+  createdAt          DateTime @default(now())
+
+  referenceProfile ReferenceProfile? @relation(fields: [referenceProfileId], references: [id])
+
+  @@index([userId])
+  @@map("benchmark_snapshots")
+}
+
+model OpportunitySignal {
+  id                      String            @id @default(cuid())
+  userId                  String
+  sourceReferenceProfileId String?
+  topic                   String
+  angle                   String?          
+  recommendedFormat        String?
+  urgencyScore            Float             @default(0)
+  noveltyScore            Float             @default(0)
+  saturationScore         Float             @default(0)
+  fitScore                Float             @default(0)
+  originalityRiskScore    Float             @default(0)
+  estimatedEffortScore    Float             @default(0)
+  potentialReachScore     Float             @default(0)
+  potentialAuthorityScore Float             @default(0)
+  recommendationSummary   String?          
+  status                  String @default("NEW")
+  metadata                String?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  user             User              @relation(fields: [userId], references: [id])
+  referenceProfile ReferenceProfile? @relation(fields: [sourceReferenceProfileId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([fitScore])
+  @@map("opportunity_signals")
+}
+
+model OriginalityCheck {
+  id                      String   @id @default(cuid())
+  userId                  String
+  sourceType              String   // reference_content, external_url
+  comparedItemId          String?  // ID do item de referência
+  candidateContentId      String?  // ID do conteúdo do usuário sendo gerado
+  referenceContentEntryId String?
+  textSimilarityScore     Float    @default(0) // 0-1
+  structureSimilarityScore Float   @default(0)
+  narrativeSimilarityScore Float   @default(0)
+  overallRiskScore        Float    @default(0)
+  recommendation          String? 
+  metadata                String?
+  createdAt               DateTime @default(now())
+
+  referenceContentEntry ReferenceContentEntry? @relation(fields: [referenceContentEntryId], references: [id])
+
+  @@index([userId])
+  @@index([overallRiskScore])
+  @@map("originality_checks")
+}
+
+// =============================================================================
+// MÓDULO 15 — AGENCY OPS (Camada Agêntica)
+// =============================================================================
+
+model Agent {
+  id           String      @id @default(cuid())
+  slug         String      @unique // chief_strategy, trend_research, carousel, etc.
+  name         String
+  description  String?    
+  role         String      // strategy, research, creative, production, quality, ops
+  status       String @default("IDLE")
+  mode         String @default("ASSISTED")
+  capabilities String?       // Lista de capabilities
+  config       String?       // Configuração específica do agente
+  isEnabled    Boolean     @default(true)
+  lastRunAt    DateTime?
+  metadata     String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  runs     AgentRun[]
+  memories AgentMemory[]
+
+  @@map("agents")
+}
+
+model AgentRun {
+  id           String        @id @default(cuid())
+  agentSlug    String
+  userId       String
+  workflowRunId String?
+  status       String @default("PENDING")
+  input        String?
+  output       String?
+  errorMessage String?      
+  startedAt    DateTime?
+  completedAt  DateTime?
+  durationMs   Int?
+  tokensUsed   Int           @default(0)
+  costUsd      Float         @default(0)
+  artifacts    String?         // Artefatos produzidos
+  metadata     String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  agent       Agent         @relation(fields: [agentSlug], references: [slug])
+  user        User          @relation(fields: [userId], references: [id])
+  workflowRun WorkflowRun?  @relation(fields: [workflowRunId], references: [id])
+  approvals   Approval[]
+  feedback    RunFeedback[]
+
+  @@index([agentSlug])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("agent_runs")
+}
+
+model Workflow {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String? 
+  type        String   // playbook, campaign, one_off, cron
+  steps       String     // Definição dos passos
+  triggers    String?    // Configuração de triggers
+  isActive    Boolean  @default(true)
+  metadata    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  runs WorkflowRun[]
+
+  @@map("workflows")
+}
+
+model WorkflowRun {
+  id          String         @id @default(cuid())
+  workflowId  String
+  userId      String?
+  status      String @default("PENDING")
+  context     String?          // Contexto compartilhado entre agentes
+  currentStep Int            @default(0)
+  totalSteps  Int            @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  errorMessage String?      
+  metadata    String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  workflow  Workflow    @relation(fields: [workflowId], references: [id])
+  agentRuns AgentRun[]
+
+  @@index([workflowId])
+  @@index([status])
+  @@map("workflow_runs")
+}
+
+model Approval {
+  id           String         @id @default(cuid())
+  userId       String
+  agentRunId   String?
+  type         String         // content, publication, response, repurpose, experiment
+  entityType   String
+  entityId     String?
+  title        String
+  description  String?       
+  payload      String?          // O que está sendo aprovado
+  status       String @default("PENDING")
+  confidence   Float          @default(0)
+  riskScore    Float          @default(0)
+  qualityScore Float          @default(0)
+  originalityScore Float      @default(0)
+  reviewedAt   DateTime?
+  reviewNotes  String?       
+  autoApproveRules String?
+  metadata     String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id])
+  agentRun AgentRun? @relation(fields: [agentRunId], references: [id])
+
+  @@index([userId, status])
+  @@index([createdAt])
+  @@map("approvals")
+}
+
+model AgentMemory {
+  id         String   @id @default(cuid())
+  agentSlug  String
+  userId     String
+  type       String   // short_term, operational, persistent
+  key        String
+  value      String
+  ttlSeconds Int?     // null = sem expiração
+  expiresAt  DateTime?
+  metadata   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  agent Agent @relation(fields: [agentSlug], references: [slug])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([agentSlug, userId, key, type])
+  @@index([agentSlug, userId])
+  @@index([expiresAt])
+  @@map("agent_memories")
+}
+
+model AutomationRule {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  trigger     String   // event, schedule, condition
+  conditions  String?
+  actions     String
+  isActive    Boolean  @default(true)
+  priority    Int      @default(0)
+  metadata    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, isActive])
+  @@map("automation_rules")
+}
+
+model KpiTarget {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  metric      String   // posts_per_week, engagement_rate, response_time_hours, etc.
+  target      Float
+  period      String   // weekly, monthly
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user    User        @relation(fields: [userId], references: [id])
+  results KpiResult[]
+
+  @@index([userId])
+  @@map("kpi_targets")
+}
+
+model KpiResult {
+  id          String   @id @default(cuid())
+  kpiTargetId String
+  actual      Float
+  period      String
+  periodStart DateTime
+  periodEnd   DateTime
+  metadata    String?
+  createdAt   DateTime @default(now())
+
+  kpiTarget KpiTarget @relation(fields: [kpiTargetId], references: [id])
+
+  @@index([kpiTargetId])
+  @@map("kpi_results")
+}
+
+model Budget {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  type        String   // ai_tokens, render, total
+  limitUsd    Float
+  period      String   // daily, weekly, monthly
+  isActive    Boolean  @default(true)
+  alertAt     Float?   // % para alertar (ex: 0.8 = 80%)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id])
+  costEvents CostEvent[]
+
+  @@index([userId])
+  @@map("budgets")
+}
+
+model CostEvent {
+  id         String   @id @default(cuid())
+  budgetId   String?
+  agentSlug  String?
+  type       String   // ai_token, render, api_call
+  amount     Float    // USD
+  description String?
+  entityType String?
+  entityId   String?
+  metadata   String?
+  createdAt  DateTime @default(now())
+
+  budget Budget? @relation(fields: [budgetId], references: [id])
+
+  @@index([budgetId])
+  @@index([agentSlug])
+  @@index([createdAt])
+  @@map("cost_events")
+}
+
+model RunFeedback {
+  id          String   @id @default(cuid())
+  agentRunId  String
+  type        String   // thumbs_up, thumbs_down, rating, comment
+  score       Int?     // 1-5
+  comment     String? 
+  metadata    String?
+  createdAt   DateTime @default(now())
+
+  agentRun AgentRun @relation(fields: [agentRunId], references: [id])
+
+  @@index([agentRunId])
+  @@map("run_feedback")
+}

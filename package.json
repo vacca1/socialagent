@@ -1,0 +1,42 @@
+{
+  "name": "postador",
+  "version": "1.0.0",
+  "private": true,
+  "description": "POSTADOR \u2014 Suite de Automa\u00e7\u00e3o de Conte\u00fado para Instagram sobre IA",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/*"
+  ],
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "test": "turbo test",
+    "test:e2e": "turbo test:e2e",
+    "db:generate": "prisma generate --schema=packages/database/prisma/schema.prisma",
+    "db:migrate": "turbo db:migrate",
+    "db:push": "prisma db push --schema=packages/database/prisma/schema.prisma",
+    "db:seed": "cd packages/database && npx tsx prisma/seed.ts",
+    "db:studio": "prisma studio --schema=packages/database/prisma/schema.prisma",
+    "workers:dev": "cd services/workers && npm run dev",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "clean": "turbo clean && find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
+    "db:reset": "prisma db push --force-reset --schema=packages/database/prisma/schema.prisma && npm run db:seed"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "prettier": "^3.3.3",
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "packageManager": "npm@10.8.2",
+  "dependencies": {
+    "@prisma/client": "^5.22.0"
+  }
+}

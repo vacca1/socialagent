@@ -1,0 +1,114 @@
+version: "3.9"
+
+services:
+  # ============================================================
+  # BANCO DE DADOS
+  # ============================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: postador_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postador
+      POSTGRES_PASSWORD: postador_dev_senha
+      POSTGRES_DB: postador_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postador"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # REDIS
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    container_name: postador_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ============================================================
+  # SOCIALFLOW (Python FastAPI — repositório existente)
+  # ============================================================
+  socialflow:
+    build:
+      context: ../SocialFlow-main/backend
+      dockerfile: Dockerfile
+    container_name: postador_socialflow
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - ../SocialFlow-main/backend:/app
+      - socialflow_sessions:/app/sessions
+      - socialflow_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================
+  # APP WEB (Next.js)
+  # ============================================================
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    container_name: postador_web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postador:postador_dev_senha@postgres:5432/postador_db
+      - REDIS_URL=redis://redis:6379
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - SOCIALFLOW_API_URL=http://socialflow:8000
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ============================================================
+  # WORKERS
+  # ============================================================
+  workers:
+    build:
+      context: ..
+      dockerfile: services/workers/Dockerfile
+    container_name: postador_workers
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://postador:postador_dev_senha@postgres:5432/postador_db
+      - REDIS_URL=redis://redis:6379
+      - SOCIALFLOW_API_URL=http://socialflow:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  socialflow_sessions:
+  socialflow_uploads:

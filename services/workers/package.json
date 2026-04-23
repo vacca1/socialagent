@@ -1,0 +1,21 @@
+{
+  "name": "@postador/workers",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@postador/database": "*",
+    "@postador/types": "*",
+    "bullmq": "^5.29.1",
+    "ioredis": "^5.4.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "@types/node": "^22.7.5",
+    "tsx": "^4.19.1"
+  }
+}

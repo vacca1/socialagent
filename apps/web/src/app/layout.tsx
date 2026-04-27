@@ -1,22 +1,23 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Outfit } from "next/font/google";
 import { Toaster } from "sonner";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import { SessionProvider } from "@/components/providers/session-provider";
+import { ThemeProvider } from "next-themes";
 import "./globals.css";
 
-const inter = Inter({
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-outfit",
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "POSTADOR — Suite de Automação de Conteúdo",
-    template: "%s | POSTADOR",
+    default: "Social OS — Inteligência de Marketing",
+    template: "%s | Social OS",
   },
   description:
-    "Plataforma completa de automação de conteúdo para Instagram sobre Inteligência Artificial.",
+    "Plataforma de inteligência e automação de engajamento social.",
   robots: { index: false, follow: false },
 };
 
@@ -26,22 +27,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning className="dark">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body
-        className={`${inter.variable} font-sans min-h-screen bg-background antialiased`}
+        className={`${outfit.variable} font-sans min-h-screen bg-background antialiased`}
       >
-        <SessionProvider>
-          <TRPCProvider>
-            {children}
-            <Toaster
-              richColors
-              position="bottom-right"
-              toastOptions={{
-                duration: 4000,
-              }}
-            />
-          </TRPCProvider>
-        </SessionProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <SessionProvider>
+            <TRPCProvider>
+              {children}
+              <Toaster
+                richColors
+                position="bottom-right"
+                toastOptions={{
+                  duration: 4000,
+                }}
+              />
+            </TRPCProvider>
+          </SessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

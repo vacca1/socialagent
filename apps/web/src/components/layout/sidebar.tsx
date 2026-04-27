@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -22,6 +23,8 @@ import {
   Zap,
   Workflow,
   Users,
+  Sun,
+  Moon
 } from "lucide-react";
 
 // ─── Navigation structure ────────────────────────────────────────────────────
@@ -99,8 +102,8 @@ function NavItem({
         "group flex items-center gap-3 py-2 rounded-lg text-sm transition-all duration-200 relative",
         "border-l-2 pl-[10px] pr-3",
         active
-          ? "bg-violet-500/10 text-violet-300 border-violet-500"
-          : "text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04] border-transparent"
+          ? "bg-primary/10 text-primary border-primary"
+          : "text-muted-foreground hover:text-foreground hover:bg-foreground/5 border-transparent"
       )}
     >
       {/* Ícone */}
@@ -108,8 +111,8 @@ function NavItem({
         className={cn(
           "w-4 h-4 flex-shrink-0 transition-all duration-200",
           active
-            ? "text-violet-400 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)]"
-            : "group-hover:text-zinc-300"
+            ? "text-primary drop-shadow-[0_0_6px_rgba(124,58,237,0.8)]"
+            : "group-hover:text-foreground"
         )}
       />
 
@@ -118,14 +121,14 @@ function NavItem({
 
       {/* Badge */}
       {badge && (
-        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-400 font-bold tracking-wide border border-violet-500/20">
+        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-bold tracking-wide border border-primary/20">
           {badge}
         </span>
       )}
 
       {/* Indicador ativo */}
       {active && (
-        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 shadow-[0_0_6px_rgba(167,139,250,0.9)] flex-shrink-0" />
+        <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_rgba(124,58,237,0.9)] flex-shrink-0" />
       )}
     </Link>
   );
@@ -136,10 +139,10 @@ function NavItem({
 function SectionLabel({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-2 px-3 pt-5 pb-1.5">
-      <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">
+      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
         {label}
       </span>
-      <div className="flex-1 h-px bg-zinc-800/60" />
+      <div className="flex-1 h-px bg-border/60" />
     </div>
   );
 }
@@ -148,38 +151,33 @@ function SectionLabel({ label }: { label: string }) {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <aside className="hidden lg:flex flex-col w-60 min-h-screen bg-[#08080f] border-r border-zinc-900 flex-shrink-0 relative">
+    <aside className="hidden lg:flex flex-col w-60 min-h-screen liquid-glass border-r-0 flex-shrink-0 relative z-50">
       {/* Glow ambiental no topo */}
       <div
         className="absolute top-0 left-0 right-0 h-32 pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,58,237,0.12) 0%, transparent 70%)",
+            "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,58,237,0.15) 0%, transparent 70%)",
         }}
       />
 
       {/* ── Logo ─────────────────────────────────── */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-zinc-900 relative z-10">
-        <div
-          className="relative flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0"
-          style={{
-            background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
-            boxShadow: "0 0 16px rgba(124,58,237,0.5), 0 1px 0 0 rgba(255,255,255,0.1) inset",
-          }}
-        >
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-border/50 relative z-10">
+        <div className="relative flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 btn-liquid">
           <Zap className="w-4 h-4 text-white drop-shadow-sm" />
         </div>
 
         <div className="min-w-0">
-          <span className="font-bold text-white text-sm tracking-wide">Social OS</span>
+          <span className="font-bold text-foreground text-sm tracking-wide">Social OS</span>
           <div className="flex items-center gap-1.5 mt-0.5">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
-            <p className="text-[10px] text-emerald-400 font-medium">IA Online</p>
+            <p className="text-[10px] text-emerald-500 font-bold">IA Online</p>
           </div>
         </div>
       </div>
@@ -188,10 +186,7 @@ export function Sidebar() {
       <nav className="flex-1 overflow-y-auto scrollbar-thin px-2 py-3 relative z-10">
         {NAV_GROUPS.map((group, groupIndex) => (
           <div key={groupIndex}>
-            {/* Label de seção */}
             {group.label && <SectionLabel label={group.label} />}
-
-            {/* Itens */}
             <div className="space-y-0.5">
               {group.items.map((item) => (
                 <NavItem
@@ -209,13 +204,26 @@ export function Sidebar() {
       </nav>
 
       {/* ── Rodapé ───────────────────────────────── */}
-      <div className="px-2 py-3 border-t border-zinc-900 relative z-10">
+      <div className="px-2 py-3 border-t border-border/50 relative z-10 space-y-1">
         <NavItem
           href="/settings"
           label="Configurações"
           icon={Settings}
           active={isActive("/settings")}
         />
+        
+        {/* Theme Toggle */}
+        <button
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="w-full group flex items-center gap-3 py-2 rounded-lg text-sm transition-all duration-200 relative border-l-2 pl-[10px] pr-3 border-transparent text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+        >
+          {theme === "dark" ? (
+            <Sun className="w-4 h-4 flex-shrink-0 group-hover:text-foreground transition-all duration-200" />
+          ) : (
+            <Moon className="w-4 h-4 flex-shrink-0 group-hover:text-foreground transition-all duration-200" />
+          )}
+          <span className="flex-1 text-left truncate font-medium">Tema {theme === "dark" ? "Claro" : "Escuro"}</span>
+        </button>
       </div>
     </aside>
   );

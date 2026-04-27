@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Users, Bot, ShieldAlert, Plus, MessageCircle, Heart, Star, Activity, Settings2, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function MilitancyPage() {
   const [showModal, setShowModal] = useState(false);
@@ -14,92 +15,105 @@ export default function MilitancyPage() {
   ];
 
   return (
-    <div className="space-y-6 text-slate-800 animate-fade-in">
+    <div className="space-y-6 animate-fade-in relative z-10">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Users className="h-6 w-6 text-emerald-500" />
-            Militância Agêntica (Bots Fãs)
+          <h1 className="text-3xl font-black text-foreground flex items-center gap-3">
+            <div className="p-2 rounded-xl liquid-glass glow-emerald">
+              <Users className="h-6 w-6 text-emerald-500" />
+            </div>
+            Exército Agêntico
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Crie personas autônomas baseadas em IA para defender a narrativa e engajar nas postagens.
+          <p className="text-muted-foreground text-sm mt-2 font-medium">
+            Crie personas autônomas baseadas em IA para defender narrativas e engajar a audiência.
           </p>
         </div>
         <button 
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+          className="flex items-center gap-2 px-5 py-2.5 btn-liquid rounded-full text-sm font-bold shadow-lg"
         >
           <Plus className="h-4 w-4" />
-          Criar Nova Persona
+          Nova Persona
         </button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Exército Ativo</span>
-            <Bot className="w-4 h-4 text-emerald-500" />
+        <div className="liquid-panel p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Exército Ativo</span>
+            <Bot className="w-4 h-4 text-primary" />
           </div>
-          <p className="text-2xl font-black text-slate-800">24 Bots</p>
+          <p className="text-3xl font-black text-foreground">24</p>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Interações Hoje</span>
+        <div className="liquid-panel p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Interações Hoje</span>
             <MessageCircle className="w-4 h-4 text-blue-500" />
           </div>
-          <p className="text-2xl font-black text-slate-800">3.010</p>
+          <p className="text-3xl font-black text-foreground">3.010</p>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Defesas de Crise</span>
+        <div className="liquid-panel p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Defesas de Crise</span>
             <ShieldAlert className="w-4 h-4 text-orange-500" />
           </div>
-          <p className="text-2xl font-black text-slate-800">45</p>
+          <p className="text-3xl font-black text-foreground">45</p>
         </div>
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Engajamento Positivo</span>
-            <Heart className="w-4 h-4 text-red-500" />
+        <div className="liquid-panel p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Engajamento Extra</span>
+            <Heart className="w-4 h-4 text-emerald-500" />
           </div>
-          <p className="text-2xl font-black text-slate-800">+15%</p>
+          <p className="text-3xl font-black text-foreground">+15%</p>
         </div>
       </div>
 
       {/* Bots Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {BOTS.map((bot) => (
-          <div key={bot.id} className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-4">
-              <div className="w-14 h-14 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
+          <div key={bot.id} className="liquid-panel p-5 relative group">
+            {/* Efeito Glow no hover */}
+            <div className="absolute inset-0 rounded-[inherit] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" 
+                 style={{ boxShadow: 'inset 0 0 20px var(--glow-violet)' }} />
+            
+            <div className="flex justify-between items-start mb-5 relative z-10">
+              <div className="w-16 h-16 rounded-2xl liquid-glass flex items-center justify-center text-3xl shadow-inner">
                 {bot.avatar}
               </div>
-              <div className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${bot.status === 'Ativa' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+              <div className={cn(
+                "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+                bot.status === 'Ativa' 
+                  ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
+                  : 'bg-foreground/5 text-muted-foreground border-border'
+              )}>
                 {bot.status}
               </div>
             </div>
             
-            <h3 className="font-bold text-lg text-slate-900 leading-tight mb-1">{bot.name}</h3>
-            <p className="text-xs font-medium text-slate-500 mb-4">{bot.type}</p>
-            
-            <div className="flex flex-wrap gap-1.5 mb-5">
-              {bot.traits.map((trait, i) => (
-                <span key={i} className="bg-slate-100 text-slate-600 px-2 py-1 rounded-lg text-[10px] font-semibold">
-                  {trait}
-                </span>
-              ))}
-            </div>
-
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600">
-                <Activity className="w-3.5 h-3.5 text-brand-500" />
-                {bot.interactions} interações
+            <div className="relative z-10">
+              <h3 className="font-bold text-lg text-foreground leading-tight mb-1">{bot.name}</h3>
+              <p className="text-xs font-medium text-primary mb-4">{bot.type}</p>
+              
+              <div className="flex flex-wrap gap-1.5 mb-6">
+                {bot.traits.map((trait, i) => (
+                  <span key={i} className="bg-foreground/5 border border-border text-foreground px-2 py-1 rounded-md text-[10px] font-bold">
+                    {trait}
+                  </span>
+                ))}
               </div>
-              <div className="flex gap-2">
-                <button className="p-1.5 text-slate-400 hover:text-brand-500 transition-colors bg-slate-50 rounded-md hover:bg-brand-50">
-                  <Settings2 className="w-4 h-4" />
-                </button>
+
+              <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+                  <Activity className="w-3.5 h-3.5 text-primary" />
+                  {bot.interactions} ops
+                </div>
+                <div className="flex gap-2">
+                  <button className="p-2 text-muted-foreground hover:text-primary transition-colors bg-foreground/5 rounded-lg hover:bg-primary/10">
+                    <Settings2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -108,45 +122,47 @@ export default function MilitancyPage() {
 
       {/* Modal Criar Persona */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-500" />
-                Criar Nova Persona
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowModal(false)}>
+          <div className="liquid-glass rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden border border-border/50" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-border/50 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-primary/20 text-primary">
+                  <Star className="w-5 h-5" />
+                </div>
+                Forjar Nova Persona
               </h2>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-5">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Nome e Avatar</label>
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Identidade</label>
                 <div className="flex gap-3">
-                  <input type="text" placeholder="Ex: Seu João do Táxi" className="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 bg-slate-50 focus:bg-white transition-colors" />
-                  <input type="text" placeholder="🚕" className="w-16 border border-slate-200 rounded-xl px-4 py-2.5 text-center text-lg outline-none focus:border-emerald-500 bg-slate-50 focus:bg-white transition-colors" />
+                  <input type="text" placeholder="Ex: Seu João do Táxi" className="flex-1 input-liquid rounded-xl px-4 py-3 text-sm font-medium" />
+                  <input type="text" placeholder="🚕" className="w-16 input-liquid rounded-xl px-4 py-3 text-center text-xl" />
                 </div>
               </div>
               
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Personalidade Base</label>
-                <select className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 bg-slate-50 focus:bg-white transition-colors">
-                  <option>Defensor Fiel (Sempre defende a gestão)</option>
-                  <option>Crítico do Adversário (Foca em atacar a oposição)</option>
-                  <option>Especialista (Focado em Infraestrutura/Saúde)</option>
-                  <option>Eleitor Comum (Usa gírias, linguagem simples)</option>
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Matriz de Comportamento</label>
+                <select className="w-full input-liquid rounded-xl px-4 py-3 text-sm font-medium">
+                  <option>Defensor Fiel (Lealdade Incondicional)</option>
+                  <option>Atacante (Foco na Oposição)</option>
+                  <option>Especialista (Dados e Fatos)</option>
+                  <option>Eleitor Comum (Orgânico e Emocional)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Instrução Agêntica (Prompt)</label>
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Prompt de Consciência</label>
                 <textarea 
-                  rows={3}
-                  placeholder="Como o bot deve se comportar? Ex: 'Seja sempre otimista, use emojis de carro, elogie a pavimentação'."
-                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-emerald-500 bg-slate-50 focus:bg-white transition-colors resize-none"
+                  rows={4}
+                  placeholder="Instrua a IA sobre como essa persona enxerga o mundo, quais gírias usa e o que ela defende..."
+                  className="w-full input-liquid rounded-xl px-4 py-3 text-sm font-medium resize-none"
                 ></textarea>
               </div>
             </div>
-            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-              <button onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors">Cancelar</button>
-              <button onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors shadow-sm">Ativar Persona</button>
+            <div className="p-6 bg-foreground/5 border-t border-border/50 flex justify-end gap-3">
+              <button onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-foreground hover:bg-foreground/10 transition-colors">Cancelar</button>
+              <button onClick={() => setShowModal(false)} className="px-6 py-2.5 rounded-xl text-sm font-bold btn-liquid">Ativar Consciência</button>
             </div>
           </div>
         </div>

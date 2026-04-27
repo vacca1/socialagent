@@ -1,5 +1,5 @@
 [build]
-  command = "npx turbo run build --filter=@postador/web"
+  command = "npx prisma generate --schema=packages/database/prisma/schema.prisma && npx turbo run build --filter=@postador/web"
   publish = "apps/web/.next"
 
 [build.environment]

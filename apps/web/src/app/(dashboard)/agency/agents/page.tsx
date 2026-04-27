@@ -91,8 +91,8 @@ export default function AgentsPage() {
                     )}
                     <div className="flex items-center gap-4 text-xs text-zinc-600">
                       <span className="font-mono text-zinc-700">{agent.slug}</span>
-                      {agent.lastRunAt && (
-                        <span>Última execução: {new Date(agent.lastRunAt).toLocaleString("pt-BR")}</span>
+                      {(agent as any).lastRunAt && (
+                        <span>Última execução: {new Date((agent as any).lastRunAt).toLocaleString("pt-BR")}</span>
                       )}
                       {(agent as any).nextRunAt && (
                         <span>Próxima: {new Date((agent as any).nextRunAt).toLocaleString("pt-BR")}</span>

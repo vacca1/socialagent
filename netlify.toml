@@ -1,6 +1,10 @@
 [build]
-  command = "npx prisma generate --schema=packages/database/prisma/schema.prisma && npx turbo run build --filter=@postador/web"
-  publish = "apps/web/.next"
+  base = "apps/web"
+  command = "cd ../.. && npx prisma generate --schema=packages/database/prisma/schema.prisma && cd apps/web && npx next build"
+  publish = ".next"
 
 [build.environment]
   NEXT_PRIVATE_STANDALONE = "true"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
